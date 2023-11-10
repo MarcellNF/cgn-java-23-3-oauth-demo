@@ -1,35 +1,45 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
+import {useEffect, useState} from "react";
+import axios from "axios";
+import {Link, Navigate, Route, Routes} from "react-router-dom";
+import Login from "./Login.tsx";
+import ProtectedRoutes from "./ProtectedRoutes.tsx";
+import SecuredComponent from "./SecuredComponent.tsx";
+
+export type AppUser = {
+    id: number,
+    login: string,
+    avatarUrl: string,
+}
 
 function App() {
-  const [count, setCount] = useState(0)
+    const [appUser, setAppUser] = useState<AppUser | null | undefined>(undefined);
 
-  return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    useEffect(() => {
+        axios.get("/api/auth/me")
+            .then((r) => setAppUser(r.data))
+            .catch((e) => {
+                console.log(e)
+                setAppUser(null)
+                return (
+                    <Navigate to={"/login"}/>
+                )
+            })
+    }, []);
+
+    return (
+        <Routes>
+            <Route path={"/"} element={(
+                <div>
+                    <Link to={"/secured"}>Secured</Link>
+                </div>
+            )}/>
+            <Route path={"/login"} element={<Login/>}/>
+            <Route element={<ProtectedRoutes appUser={appUser}/>}>
+                <Route path={"/secured"} element={<SecuredComponent/>}/>
+            </Route>
+        </Routes>
+    )
 }
 
 export default App
